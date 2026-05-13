@@ -27,6 +27,8 @@ ejecutar una prueba de humo sobre un contador de 8 bits.
 Si algo falla, consulta [`docs/setup.md`](docs/setup.md).
 
 ## Estructura del repositorio
+
+```text
 .
 ├── .devcontainer/      Definición del entorno reproducible
 │   ├── Dockerfile
@@ -44,6 +46,7 @@ Si algo falla, consulta [`docs/setup.md`](docs/setup.md).
 ├── Makefile            Orquestación de simulación
 ├── requirements.txt    Dependencias Python con versiones fijas
 └── README.md
+```
 
 ## Stack
 
