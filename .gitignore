@@ -1,0 +1,46 @@
+# === Artefactos de simulación cocotb / Icarus / Verilator ===
+sim_build/
+results.xml
+*.vcd
+*.fst
+*.lxt
+*.lxt2
+*.vvp
+obj_dir/
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# === Entornos virtuales ===
+.venv/
+venv/
+env/
+ENV/
+
+# === Editores e IDEs ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === Jupyter ===
+.ipynb_checkpoints/
+
+# === Sistema operativo ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Logs ===
+*.log
