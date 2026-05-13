@@ -40,7 +40,7 @@ git --version
 # Esperado: git 2.x
 
 iverilog -V
-# Esperado: Icarus Verilog version 11.x o superior
+# Esperado: Icarus Verilog version 11.x (en Bookworm: 11.0 stable)
 
 verilator --version
 # Esperado: Verilator 5.x (versión exacta según Bookworm)
@@ -65,17 +65,27 @@ make
 ```
 
 Salida esperada (resumida):
+
+```text
 ...
-INFO     ... test_smoke.py ... PASS: contador incrementa correctamente a 5
-INFO     ... test_smoke.py ... cocotb y pyuvm cargados sin errores.
+0.00ns INFO  cocotb            Running on Icarus Verilog version 11.0 (stable)
+0.00ns INFO  cocotb            Running tests with cocotb v1.9.2 from ...
+0.00ns INFO  cocotb.regression Found test test_smoke.test_counter_increment
 ...
+71.00ns INFO cocotb.counter    PASS: contador incrementa correctamente a 5
+71.00ns INFO cocotb.counter    cocotb y pyuvm cargados sin errores.
+71.00ns INFO cocotb.regression test_counter_increment passed
+...
+** TEST                               STATUS  SIM TIME (ns)  REAL TIME (s) **
+** test_smoke.test_counter_increment  PASS         71.00            0.00   **
+** TESTS=1 PASS=1 FAIL=0 SKIP=0                    71.00            0.13   **
+```
 
-** TEST                                            STATUS  ...
-
-** test_smoke.test_counter_increment               PASS    ...
-
-** TESTS=1 PASS=1 FAIL=0 SKIP=0                            ...
-
+> Nota: cocotb imprime al inicio el mensaje informativo
+> `Did not detect Python virtual environment. Using system-wide Python
+> interpreter`. No es un error. La instalación con `pip install --user`
+> es la práctica recomendada en este Dev Container y funciona
+> correctamente.
 
 ## Limpieza
 
@@ -105,6 +115,39 @@ cocotb-config --version
 La imagen del contenedor no se construyó completamente. Desde la
 paleta de comandos de VS Code:
 **Codespaces: Rebuild Container**.
+
+### `iverilog: no source files.`
+
+Síntoma: `make` se interrumpe casi al inicio con:
+
+```text
+/usr/bin/iverilog: no source files.
+make[2]: *** [.../simulators/Makefile.icarus:81: sim_build/sim.vvp] Error 1
+```
+
+Causa: las variables del `Makefile` del proyecto
+(`VERILOG_SOURCES`, `TOPLEVEL`, `MODULE`) no llegaron al sub-`make`
+que ejecuta `Makefile.sim` de cocotb. GNU Make no exporta variables
+al entorno por defecto, así que cuando el `Makefile` delega vía
+`$(MAKE) -f .../Makefile.sim`, esas variables hay que **exportarlas
+explícitamente y, además, pasarlas inline** al sub-`make`.
+
+Diagnóstico rápido:
+
+```bash
+make -n test 2>&1 | head -n 15
+```
+
+Si en la línea que invoca `vvp` ves variables vacías, p. ej.:
+
+```text
+MODULE= TESTCASE= TOPLEVEL= TOPLEVEL_LANG=verilog \
+   /usr/bin/vvp -M ... sim_build/sim.vvp
+```
+
+…es exactamente este problema. Verifica que el `Makefile` del
+repositorio contiene tanto las directivas `export VAR` como las
+asignaciones inline (`VAR=$(VAR)`) en la línea del sub-`make`.
 
 ### El test queda colgado
 
