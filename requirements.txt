@@ -1,0 +1,7 @@
+# Dependencias Python del curso.
+# Versiones fijas para garantizar reproducibilidad entre cohortes.
+
+cocotb==1.9.2
+pyuvm==3.0.0
+cocotb-coverage==1.2.0
+pytest==8.3.3
