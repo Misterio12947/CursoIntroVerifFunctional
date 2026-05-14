@@ -305,13 +305,27 @@ las constantes existentes.
 
 ## Si te bloqueas
 
-1. Consulta la documentación oficial de cocotb:
+Sigue este orden, de menor a mayor "ayuda":
+
+1. **Documentación oficial de cocotb**:
    - Triggers: <https://docs.cocotb.org/en/stable/triggers.html>
    - Corrutinas: <https://docs.cocotb.org/en/stable/coroutines.html>
-2. Mira el `counter_reference.md` en `solutions/lab1_counter/` para
-   refrescar el comportamiento esperado del DUT.
-3. Solo como **último recurso**, abre la solución maestra en
-   `solutions/lab1_counter/test_counter.py`.
+
+2. **Modelo de referencia del DUT**:
+   [`../../solutions/lab1_counter/counter_reference.md`](../../solutions/lab1_counter/counter_reference.md).
+   Describe el comportamiento esperado del contador, su tabla de verdad
+   y el diagrama de tiempos.
+
+3. **Salida esperada**:
+   [`../../solutions/lab1_counter/expected_output.log`](../../solutions/lab1_counter/expected_output.log).
+   Es la captura real del `make` sobre la solución maestra. Compara
+   timestamps y mensajes con tu propia salida para identificar dónde
+   diverges.
+
+4. **Último recurso — solución maestra**:
+   [`../../solutions/lab1_counter/test_counter.py`](../../solutions/lab1_counter/test_counter.py).
+   Ábrelo solo después de haber intentado resolverlo. Si lo abres antes,
+   el aprendizaje se pierde.
 
 ## Checklist de cierre
 
