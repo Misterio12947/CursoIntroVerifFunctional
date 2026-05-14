@@ -44,3 +44,8 @@ desktop.ini
 
 # === Logs ===
 *.log
+
+# === Artefactos generados por `make waves` ===
+# dump.v es generado por el Makefile del laboratorio cuando se ejecuta
+# `make waves`. No es código fuente.
+**/waves/dump.v

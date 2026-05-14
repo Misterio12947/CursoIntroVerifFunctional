@@ -51,7 +51,8 @@ test:
 	    MODULE=$(MODULE)
 
 # Genera waveforms VCD en waves/counter.vcd (Icarus).
-# Implementación: añadimos un wrapper Verilog mínimo que invoca $dumpvars.
+# El módulo dump se compila como segundo top vía COMPILE_ARGS=-s dump,
+# de forma que su $dumpvars se ejecuta al inicio de la simulación.
 .PHONY: waves
 waves:
 	@mkdir -p $(TOPDIR)/waves
@@ -68,10 +69,18 @@ waves:
 	    TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
 	    VERILOG_SOURCES="$(VERILOG_SOURCES) $(TOPDIR)/waves/dump.v" \
 	    TOPLEVEL=$(TOPLEVEL) \
-	    MODULE=$(MODULE)
-	@echo ""
-	@echo "Waveform generado en: $(TOPDIR)/waves/counter.vcd"
-	@echo "Ábrelo con GTKWave local o la extensión Surfer en VS Code."
+	    MODULE=$(MODULE) \
+	    COMPILE_ARGS="-s dump"
+	@if [ -s $(TOPDIR)/waves/counter.vcd ]; then \
+	    echo ""; \
+	    echo "Waveform generado: $(TOPDIR)/waves/counter.vcd"; \
+	    echo "Tamaño: $$(du -h $(TOPDIR)/waves/counter.vcd | cut -f1)"; \
+	    echo "Ábrelo con GTKWave local o la extensión Surfer en VS Code."; \
+	else \
+	    echo ""; \
+	    echo "ERROR: waves/counter.vcd no se generó o está vacío."; \
+	    exit 1; \
+	fi
 
 .PHONY: clean
 clean:
