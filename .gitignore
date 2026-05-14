@@ -44,6 +44,9 @@ desktop.ini
 
 # === Logs ===
 *.log
+# Excepciones: expected_output.log es referencia versionada, no artefacto.
+!solutions/**/expected_output.log
+!labs/**/expected_output.log
 
 # === Artefactos generados por `make waves` ===
 # dump.v es generado por el Makefile del laboratorio cuando se ejecuta
