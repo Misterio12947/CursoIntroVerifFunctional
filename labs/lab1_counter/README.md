@@ -139,22 +139,30 @@ test_counter.py
 
 ## Flujo del test maestro (timeline)
 
-Así se ve la simulación cuando el test está completo:
+Esta es la evolución de las señales del DUT cuando el test está
+completo. Cada columna representa un ciclo de reloj.
 
 ```text
-              ___     ___     ___     ___     ___     ___     ___     ___
-clk      ____|   |___|   |___|   |___|   |___|   |___|   |___|   |___|   |__
-
-         _________________________
-rst      |                        |________________________________________
-
-                                  __________________________
-en       _________________________|                         |_______________
-
-count    [0 ][0 ][0 ][0 ][1 ][2 ][3 ][4 ][5 ][5 ][5 ][5 ][0 ]
-              ↑                    ↑                         ↑
-              reset                conta con en=1            reset en caliente
+Ciclo:    0   1   2   3   4   5   6   7   8   9  10  11  12  13
+        +---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+rst     | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
+en      | 0 | 0 | 0 | 1 | 1 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
+count   | 0 | 0 | 0 | 0 | 1 | 2 | 3 | 4 | 5 | 5 | 5 | 5 | 0 | 0 |
+        +---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+          ^       ^                   ^               ^
+       reset   reset            congela en=0       reset
+       activo  liberado         (count se          en caliente
+                                queda en 5)
 ```
+
+Observaciones clave:
+
+- Cuando `rst=1`, `count` se fuerza a 0 en el siguiente flanco.
+- Cuando `en=1` y `rst=0`, `count` incrementa una unidad por ciclo.
+- Cuando `en=0`, `count` se congela en su último valor.
+- El RTL aplica el efecto con **un ciclo de latencia** (es un FF síncrono):
+  por ejemplo, `en` pasa a 1 entre los ciclos 2 y 3, pero `count` no
+  vale 1 hasta el ciclo 4.
 
 ## Cómo resolver el lab (ruta recomendada)
 
