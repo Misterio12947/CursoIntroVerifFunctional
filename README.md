@@ -6,8 +6,16 @@ Infraestructura del curso. Permite ejecutar simulaciones de RTL Verilog
 y testbenches en Python con cocotb y pyUVM, todo dentro de un entorno
 reproducible que se levanta automáticamente en GitHub Codespaces.
 
-Este repositorio corresponde al **Día 1**: levantar el entorno y
-ejecutar una prueba de humo sobre un contador de 8 bits.
+Este repositorio cubre los primeros días del curso. Cada día añade una
+capa sobre la anterior.
+
+## Estado
+
+Días disponibles:
+
+- **Día 1**: infraestructura Dev Container + smoke test del contador.
+- **Día 2**: laboratorio 1 (verificación del contador con cocotb), con
+  solución maestra, skeleton para el alumno y waveforms.
 
 ## Inicio rápido
 
@@ -33,17 +41,28 @@ Si algo falla, consulta [`docs/setup.md`](docs/setup.md).
 ├── .devcontainer/      Definición del entorno reproducible
 │   ├── Dockerfile
 │   └── devcontainer.json
-├── rtl/                Diseños Verilog
+├── rtl/                Diseños Verilog compartidos por todos los labs
 │   └── counter.v
-├── tests/              Tests cocotb / pyUVM
+├── tests/              Smoke test del Día 1
 │   └── test_smoke.py
-├── labs/               Laboratorios guiados (próximos días)
-├── solutions/          Soluciones de los laboratorios
+├── labs/
+│   └── lab1_counter/   Lab 1: contador con cocotb (skeleton del alumno)
+│       ├── Makefile
+│       ├── README.md
+│       ├── test_counter.py
+│       └── waves/
+├── solutions/
+│   └── lab1_counter/   Lab 1: solución maestra y referencia
+│       ├── Makefile
+│       ├── counter_reference.md
+│       ├── expected_output.log
+│       ├── test_counter.py
+│       └── waves/
 ├── slides/             Material de presentación
 ├── notebooks/          Notebooks de apoyo
 ├── docs/               Documentación técnica
 │   └── setup.md
-├── Makefile            Orquestación de simulación
+├── Makefile            Orquestación del smoke test del Día 1
 ├── requirements.txt    Dependencias Python con versiones fijas
 └── README.md
 ```
@@ -69,9 +88,26 @@ construye la imagen.
 
 | Comando        | Acción                                                   |
 |----------------|----------------------------------------------------------|
-| `make`         | Alias de `make test`.                                    |
-| `make test`    | Compila el RTL con Icarus y ejecuta el test cocotb.      |
-| `make clean`   | Elimina artefactos de simulación.                        |
+| `make`         | Smoke test del Día 1 (ejecutado desde la raíz).          |
+| `make test`    | Alias de `make`.                                         |
+| `make clean`   | Elimina artefactos de simulación de la raíz.             |
+
+Cada laboratorio tiene su propio `Makefile` con los mismos targets,
+ejecutables desde la carpeta del lab. Ver `labs/<lab>/README.md` para
+detalles.
+
+## Laboratorios disponibles
+
+| Lab                                   | Foco                                     |
+|---------------------------------------|------------------------------------------|
+| [`lab1_counter`](labs/lab1_counter/)  | Verificación de un contador síncrono con cocotb. Introducción a corrutinas, triggers y waveforms. |
+
+Cada laboratorio incluye:
+
+- Versión skeleton (con `TODO`s) en `labs/<lab>/`.
+- Solución maestra y referencias en `solutions/<lab>/`.
+
+Para empezar el Lab 1, abre [`labs/lab1_counter/README.md`](labs/lab1_counter/README.md).
 
 ## Ejecución local (sin Codespaces)
 

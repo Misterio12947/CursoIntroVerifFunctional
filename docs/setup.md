@@ -185,3 +185,29 @@ grep -nP "^    " Makefile
   diseños con constructos no sintetizables.
 - **GitHub Codespaces** en cuentas gratuitas tiene cuotas mensuales.
   Detén tus Codespaces cuando no los uses.
+
+## Cómo navegar entre el Día 1 y el Día 2
+
+- **Día 1 (smoke test)**: ejecutas `make` desde la **raíz** del repositorio.
+  Esto compila `rtl/counter.v` con `tests/test_smoke.py` y verifica que
+  el entorno está bien.
+- **Día 2 (Lab 1)**: ejecutas `make` desde `labs/lab1_counter/` o desde
+  `solutions/lab1_counter/`. Cada lab es autocontenido en su carpeta y
+  comparte el RTL de `rtl/`.
+
+Estructura mental: `rtl/` es la "biblioteca de DUTs" compartida. Cada
+testbench (raíz, lab o solución) la importa.
+
+## Regenerar `expected_output.log`
+
+Si la solución maestra cambia y necesitas actualizar el log de
+referencia:
+
+```bash
+cd solutions/lab1_counter
+make clean
+make 2>&1 | tee /tmp/run.log
+sed -E '/Seeding Python random module/d' /tmp/run.log > expected_output.log
+git add expected_output.log
+git commit -m "docs(solutions): refresh expected_output.log"
+```
