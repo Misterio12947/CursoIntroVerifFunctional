@@ -1,19 +1,37 @@
-# Makefile para la prueba de humo del Día 1.
-# Delega la lógica de simulación al Makefile.sim que provee cocotb.
+# ============================================================================
+# Makefile raíz del curso.
+# ----------------------------------------------------------------------------
+# Parametrizable: permite ejecutar distintos testbenches sin duplicar reglas.
+#
+# Uso por defecto (smoke test del Día 1):
+#     make
+#
+# Uso parametrizado:
+#     make MODULE=<test_module>
+#     make MODULE=<test_module> TESTCASE=<single_test>
+#     make MODULE=<test_module> MODULE_DIR=<path> VERILOG_SOURCES=...
+#
+# Lecciones aplicadas del Día 1 (caso "iverilog: no source files."):
+#   - export VAR explícito.
+#   - VAR=$(VAR) pasada inline al sub-make como red de seguridad.
+# ============================================================================
 
-# Directorio donde vive ESTE Makefile, calculado de forma robusta.
+# Directorio donde vive ESTE Makefile.
 TOPDIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 # --- Configuración del simulador ---
 SIM            ?= icarus
 TOPLEVEL_LANG  ?= verilog
 
-# --- Fuentes y toplevel ---
-VERILOG_SOURCES := $(TOPDIR)/rtl/counter.v
-TOPLEVEL        := counter
+# --- Defaults: smoke test del Día 1 ---
+VERILOG_SOURCES ?= $(TOPDIR)/rtl/counter.v
+TOPLEVEL        ?= counter
+MODULE          ?= test_smoke
+MODULE_DIR      ?= $(TOPDIR)/tests
 
-# --- Módulo Python con los tests (sin extensión .py) ---
-MODULE          := test_smoke
+# TESTCASE es opcional. Si no se define, cocotb corre todos los tests
+# del MODULE. Si se define, solo corre el test indicado.
+TESTCASE ?=
 
 # Exportar variables al entorno para el sub-make.
 export SIM
@@ -22,15 +40,20 @@ export VERILOG_SOURCES
 export TOPLEVEL
 export MODULE
 
-# Hacer visible la carpeta tests/ a Python.
-export PYTHONPATH := $(TOPDIR)/tests:$(PYTHONPATH)
+# Hacer visible MODULE_DIR a Python.
+export PYTHONPATH := $(MODULE_DIR):$(PYTHONPATH)
 
-# Objetivo por defecto.
+# Si TESTCASE está definido, exportarlo también.
+ifneq ($(strip $(TESTCASE)),)
+export TESTCASE
+endif
+
+# ----------------------------------------------------------------------------
+# Targets.
+# ----------------------------------------------------------------------------
 .PHONY: all
 all: test
 
-# Ejecuta la simulación delegando al Makefile.sim oficial de cocotb.
-# Las variables se pasan también inline como red de seguridad.
 .PHONY: test
 test:
 	$(MAKE) -f $(shell cocotb-config --makefiles)/Makefile.sim \
@@ -38,10 +61,20 @@ test:
 	    TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
 	    VERILOG_SOURCES="$(VERILOG_SOURCES)" \
 	    TOPLEVEL=$(TOPLEVEL) \
-	    MODULE=$(MODULE)
+	    MODULE=$(MODULE) \
+	    $(if $(strip $(TESTCASE)),TESTCASE=$(TESTCASE),)
 
-# Limpieza de artefactos generados por la simulación.
 .PHONY: clean
 clean:
 	rm -rf sim_build results.xml *.vcd *.fst *.vvp \
-	       __pycache__ tests/__pycache__
+	       __pycache__ $(MODULE_DIR)/__pycache__
+
+# ----------------------------------------------------------------------------
+# Atajos útiles. No son obligatorios pero documentan ejemplos comunes.
+# ----------------------------------------------------------------------------
+.PHONY: smoke
+smoke:
+	$(MAKE) MODULE=test_smoke \
+	        MODULE_DIR=$(TOPDIR)/tests \
+	        VERILOG_SOURCES=$(TOPDIR)/rtl/counter.v \
+	        TOPLEVEL=counter
