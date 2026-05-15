@@ -1,5 +1,7 @@
 # Verificación Funcional de Circuitos Digitales con Python
 
+[![CI](https://github.com/Misterio12947/CursoIntroVerifFunctional/actions/workflows/ci.yml/badge.svg)](https://github.com/Misterio12947/CursoIntroVerifFunctional/actions/workflows/ci.yml)
+
 **Introducción a UVM usando pyUVM, cocotb y GitHub Codespaces**
 
 Infraestructura del curso. Permite ejecutar simulaciones de RTL Verilog
@@ -16,6 +18,9 @@ Días disponibles:
 - **Día 1**: infraestructura Dev Container + smoke test del contador.
 - **Día 2**: laboratorio 1 (verificación del contador con cocotb), con
   solución maestra, skeleton para el alumno y waveforms.
+- **Día 3**: laboratorio 2 (verificación de un FIFO con scoreboard y
+  modelo de referencia Python). CI con GitHub Actions ejecuta los
+  tres flujos en cada push.
 
 ## Inicio rápido
 
@@ -38,32 +43,29 @@ Si algo falla, consulta [`docs/setup.md`](docs/setup.md).
 
 ```text
 .
-├── .devcontainer/      Definición del entorno reproducible
+├── .github/
+│   └── workflows/
+│       └── ci.yml          GitHub Actions: smoke test + lab1 + lab2
+├── .devcontainer/          Definición del entorno reproducible
 │   ├── Dockerfile
 │   └── devcontainer.json
-├── rtl/                Diseños Verilog compartidos por todos los labs
-│   └── counter.v
-├── tests/              Smoke test del Día 1
+├── rtl/                    Diseños Verilog compartidos por todos los labs
+│   ├── counter.v
+│   └── fifo.v
+├── tests/                  Smoke test del Día 1
 │   └── test_smoke.py
 ├── labs/
-│   └── lab1_counter/   Lab 1: contador con cocotb (skeleton del alumno)
-│       ├── Makefile
-│       ├── README.md
-│       ├── test_counter.py
-│       └── waves/
+│   ├── lab1_counter/       Lab 1: contador con cocotb (skeleton)
+│   └── lab2_fifo/          Lab 2: FIFO con scoreboard (skeleton)
 ├── solutions/
-│   └── lab1_counter/   Lab 1: solución maestra y referencia
-│       ├── Makefile
-│       ├── counter_reference.md
-│       ├── expected_output.log
-│       ├── test_counter.py
-│       └── waves/
-├── slides/             Material de presentación
-├── notebooks/          Notebooks de apoyo
-├── docs/               Documentación técnica
+│   ├── lab1_counter/       Lab 1: solución maestra y referencia
+│   └── lab2_fifo/          Lab 2: solución maestra, modelo y scoreboard
+├── slides/                 Material de presentación
+├── notebooks/              Notebooks de apoyo
+├── docs/                   Documentación técnica
 │   └── setup.md
-├── Makefile            Orquestación del smoke test del Día 1
-├── requirements.txt    Dependencias Python con versiones fijas
+├── Makefile                Smoke test del Día 1 (parametrizable)
+├── requirements.txt        Dependencias Python con versiones fijas
 └── README.md
 ```
 
@@ -98,16 +100,30 @@ detalles.
 
 ## Laboratorios disponibles
 
-| Lab                                   | Foco                                     |
-|---------------------------------------|------------------------------------------|
-| [`lab1_counter`](labs/lab1_counter/)  | Verificación de un contador síncrono con cocotb. Introducción a corrutinas, triggers y waveforms. |
+| Lab                                   | Foco                                                                |
+|---------------------------------------|---------------------------------------------------------------------|
+| [`lab1_counter`](labs/lab1_counter/)  | Verificación de un contador síncrono con cocotb. Corrutinas y triggers. |
+| [`lab2_fifo`](labs/lab2_fifo/)        | Verificación de una FIFO síncrona con modelo de referencia Python y scoreboard. |
 
 Cada laboratorio incluye:
 
 - Versión skeleton (con `TODO`s) en `labs/<lab>/`.
 - Solución maestra y referencias en `solutions/<lab>/`.
 
-Para empezar el Lab 1, abre [`labs/lab1_counter/README.md`](labs/lab1_counter/README.md).
+Para empezar: [`labs/lab1_counter/README.md`](labs/lab1_counter/README.md) o
+[`labs/lab2_fifo/README.md`](labs/lab2_fifo/README.md).
+
+## Integración continua
+
+GitHub Actions ejecuta automáticamente en cada push y pull request a `main`:
+
+- `smoke-test`: smoke test del Día 1.
+- `lab1-counter`: solución maestra del Lab 1.
+- `lab2-fifo`: 4 tests de la solución maestra del Lab 2.
+
+Los tres jobs corren en paralelo en runners separados. El estado en
+tiempo real se ve en el badge superior y en la pestaña
+[Actions](https://github.com/Misterio12947/CursoIntroVerifFunctional/actions).
 
 ## Ejecución local (sin Codespaces)
 
