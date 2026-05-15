@@ -185,18 +185,41 @@ grep -nP "^    " Makefile
   diseños con constructos no sintetizables.
 - **GitHub Codespaces** en cuentas gratuitas tiene cuotas mensuales.
   Detén tus Codespaces cuando no los uses.
+  
+## Integración continua
 
-## Cómo navegar entre el Día 1 y el Día 2
+El repositorio tiene un workflow de GitHub Actions
+(`.github/workflows/ci.yml`) que ejecuta automáticamente en cada
+push y pull request:
 
-- **Día 1 (smoke test)**: ejecutas `make` desde la **raíz** del repositorio.
-  Esto compila `rtl/counter.v` con `tests/test_smoke.py` y verifica que
-  el entorno está bien.
-- **Día 2 (Lab 1)**: ejecutas `make` desde `labs/lab1_counter/` o desde
-  `solutions/lab1_counter/`. Cada lab es autocontenido en su carpeta y
-  comparte el RTL de `rtl/`.
+| Job             | Acción                                          |
+|-----------------|-------------------------------------------------|
+| `smoke-test`    | `make` desde la raíz (Día 1).                   |
+| `lab1-counter`  | `make -C solutions/lab1_counter` (Día 2).       |
+| `lab2-fifo`     | `make -C solutions/lab2_fifo` (Día 3, 4 tests). |
 
-Estructura mental: `rtl/` es la "biblioteca de DUTs" compartida. Cada
-testbench (raíz, lab o solución) la importa.
+Si el badge del README muestra "passing", los tres flujos se ejecutan
+sin errores en un runner limpio. Si muestra "failing", alguno falló
+y conviene revisar la pestaña Actions del repositorio antes de
+asumir que algo está bien.
+
+El workflow es independiente del Dev Container: instala `iverilog`,
+`verilator`, `gtkwave` y los paquetes pip directamente sobre el
+runner `ubuntu-latest`. El Dev Container sigue siendo la fuente de
+verdad para desarrollo local y Codespaces.
+
+## Cómo navegar entre laboratorios
+
+Desde el Día 3 hay dos laboratorios. Cada uno tiene su propia carpeta
+con `Makefile`, README y `test_*.py`:
+
+- `labs/lab1_counter/` — Lab 1 (skeleton del alumno).
+- `solutions/lab1_counter/` — Lab 1 (solución maestra + referencia).
+- `labs/lab2_fifo/` — Lab 2 (skeleton del alumno).
+- `solutions/lab2_fifo/` — Lab 2 (solución maestra + referencia).
+
+El RTL en `rtl/` se comparte entre todos: una sola fuente de verdad
+para cada DUT.
 
 ## Regenerar `expected_output.log`
 
