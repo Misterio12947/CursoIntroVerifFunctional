@@ -47,7 +47,7 @@ jobs:
           iverilog -V | head -n 2
           verilator --version
           python -c "import cocotb; print('cocotb', cocotb.__version__)"
-          python -c "import pyuvm;  print('pyuvm ', pyuvm.__version__)"
+          python -c "import pyuvm; from importlib.metadata import version; print('pyuvm ', version('pyuvm'))"
 
       - name: Run smoke test
         run: make

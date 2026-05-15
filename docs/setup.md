@@ -51,7 +51,7 @@ gtkwave --version
 python -c "import cocotb; print(cocotb.__version__)"
 # Esperado: 1.9.2
 
-python -c "import pyuvm;  print(pyuvm.__version__)"
+python -c "from importlib.metadata import version; print(version('pyuvm'))"
 # Esperado: 3.0.0
 ```
 
