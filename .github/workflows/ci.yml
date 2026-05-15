@@ -1,0 +1,105 @@
+# ============================================================================
+# CI — GitHub Actions
+# ----------------------------------------------------------------------------
+# Ejecuta el smoke test del Día 1, el Lab 1 y el Lab 2 en cada push y en
+# cada pull request a main. Cada job corre en paralelo en su propio runner.
+# Si cualquiera falla, el commit queda marcado con un check rojo.
+# ============================================================================
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    name: Smoke test (Día 1)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install HDL tools (apt)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+              iverilog verilator gtkwave
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify tool versions
+        run: |
+          python --version
+          iverilog -V | head -n 2
+          verilator --version
+          python -c "import cocotb; print('cocotb', cocotb.__version__)"
+          python -c "import pyuvm;  print('pyuvm ', pyuvm.__version__)"
+
+      - name: Run smoke test
+        run: make
+
+  lab1-counter:
+    name: Lab 1 — Counter (Día 2)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install HDL tools (apt)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+              iverilog verilator gtkwave
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run lab1 master solution
+        run: make -C solutions/lab1_counter
+
+  lab2-fifo:
+    name: Lab 2 — FIFO (Día 3)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install HDL tools (apt)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+              iverilog verilator gtkwave
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run lab2 master solution (4 tests)
+        run: make -C solutions/lab2_fifo
