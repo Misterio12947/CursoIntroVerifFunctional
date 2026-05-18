@@ -60,7 +60,6 @@ from pyuvm import (
     uvm_env,
     uvm_test,
     uvm_root,
-    ConfigDB,
     uvm_tlm_analysis_fifo,
 )
 
@@ -170,17 +169,14 @@ class AluTransaction(uvm_sequence_item):
 # si fuera necesario (no en este caso, pero el patrón lo soporta).
 # ============================================================================
 class AluSequence(uvm_sequence):
-    """Genera transacciones aleatorias. Lee N y SEED de ConfigDB."""
+    """Genera N_TRANSACTIONS transacciones aleatorias con seed fijo SEED."""
 
     def __init__(self, name="alu_seq"):
         super().__init__(name)
-        # Lee parámetros del ConfigDB (los pone el wrapper @cocotb.test).
-        self.n_transactions = ConfigDB().get(None, "", "N_TRANSACTIONS")
-        seed                = ConfigDB().get(None, "", "SEED")
-        self.rng            = random.Random(seed)
+        self.rng = random.Random(SEED)
 
     async def body(self):
-        for _ in range(self.n_transactions):
+        for _ in range(N_TRANSACTIONS):
             tr = AluTransaction()
             tr.randomize(self.rng)
             await self.start_item(tr)
@@ -329,8 +325,6 @@ class AluScoreboard(uvm_component):
         self.n_received  = 0
         self.n_passed    = 0
         self.n_failed    = 0
-        # Lee el número esperado de transacciones de ConfigDB.
-        self.n_expected  = ConfigDB().get(None, "", "N_TRANSACTIONS")
 
     async def run_phase(self):
         while True:
@@ -373,8 +367,8 @@ class AluScoreboard(uvm_component):
         assert self.n_failed == 0, (
             f"Scoreboard detectó {self.n_failed} discrepancias."
         )
-        assert self.n_received == self.n_expected, (
-            f"Se esperaban {self.n_expected} transacciones, "
+        assert self.n_received == N_TRANSACTIONS, (
+            f"Se esperaban {N_TRANSACTIONS} transacciones, "
             f"recibidas {self.n_received}."
         )
 
@@ -444,11 +438,8 @@ async def alu_uvm_test(dut):
     dut.rst.value = 0
     await RisingEdge(dut.clk)
 
-    # 3. Publica parámetros de test en ConfigDB.
-    #    El DUT no se publica aquí: los componentes lo acceden vía
-    #    cocotb.top directamente (más idiomático en pyUVM).
-    ConfigDB().set(None, "*", "N_TRANSACTIONS", N_TRANSACTIONS)
-    ConfigDB().set(None, "*", "SEED",           SEED)
-
-    # 4. Arranca el test UVM.
+    # 3. Arranca el test UVM.
+    #    N_TRANSACTIONS y SEED se leen directamente como constantes
+    #    de módulo desde AluSequence y AluScoreboard. cocotb.top
+    #    sigue siendo la forma de acceder al DUT desde los componentes.
     await uvm_root().run_test("AluTest")
