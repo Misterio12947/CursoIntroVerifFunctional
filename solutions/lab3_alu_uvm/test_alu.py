@@ -170,14 +170,17 @@ class AluTransaction(uvm_sequence_item):
 # si fuera necesario (no en este caso, pero el patrón lo soporta).
 # ============================================================================
 class AluSequence(uvm_sequence):
-    """Genera N_TRANSACTIONS transacciones aleatorias."""
+    """Genera transacciones aleatorias. Lee N y SEED de ConfigDB."""
 
     def __init__(self, name="alu_seq"):
         super().__init__(name)
-        self.rng = random.Random(SEED)
+        # Lee parámetros del ConfigDB (los pone el wrapper @cocotb.test).
+        self.n_transactions = ConfigDB().get(None, "", "N_TRANSACTIONS")
+        seed                = ConfigDB().get(None, "", "SEED")
+        self.rng            = random.Random(seed)
 
     async def body(self):
-        for _ in range(N_TRANSACTIONS):
+        for _ in range(self.n_transactions):
             tr = AluTransaction()
             tr.randomize(self.rng)
             await self.start_item(tr)
@@ -194,8 +197,10 @@ class AluDriver(uvm_driver):
     """Aplica AluTransactions al DUT vía sus señales a/b/op/start."""
 
     def build_phase(self):
-        # Recupera el dut del ConfigDB. La key "DUT" la pone el wrapper.
-        self.dut = ConfigDB().get(self, "", "DUT")
+        # Acceso directo al DUT vía cocotb.top, el handle global del
+        # toplevel del simulador. Más limpio que pasar el dut por ConfigDB:
+        # cocotb ya provee el puntero, no hay razón para envolverlo.
+        self.dut = cocotb.top
 
     async def run_phase(self):
         # Estado inicial.
@@ -236,8 +241,8 @@ class AluMonitor(uvm_monitor):
     """Observa el DUT y publica AluTransaction al analysis_port."""
 
     def build_phase(self):
-        self.dut = ConfigDB().get(self, "", "DUT")
-        # Analysis port: el scoreboard se conecta aquí.
+        # cocotb.top: puntero global al DUT (ver AluDriver).
+        self.dut = cocotb.top
         self.analysis_port = self.create_analysis_port("ap")
 
     def create_analysis_port(self, name):
@@ -324,6 +329,8 @@ class AluScoreboard(uvm_component):
         self.n_received  = 0
         self.n_passed    = 0
         self.n_failed    = 0
+        # Lee el número esperado de transacciones de ConfigDB.
+        self.n_expected  = ConfigDB().get(None, "", "N_TRANSACTIONS")
 
     async def run_phase(self):
         while True:
@@ -366,8 +373,8 @@ class AluScoreboard(uvm_component):
         assert self.n_failed == 0, (
             f"Scoreboard detectó {self.n_failed} discrepancias."
         )
-        assert self.n_received == N_TRANSACTIONS, (
-            f"Se esperaban {N_TRANSACTIONS} transacciones, "
+        assert self.n_received == self.n_expected, (
+            f"Se esperaban {self.n_expected} transacciones, "
             f"recibidas {self.n_received}."
         )
 
@@ -437,9 +444,11 @@ async def alu_uvm_test(dut):
     dut.rst.value = 0
     await RisingEdge(dut.clk)
 
-    # 3. Inyecta el DUT en el ConfigDB.
-    ConfigDB().set(None, "uvm_test_top.env.agent.driver",  "DUT", dut)
-    ConfigDB().set(None, "uvm_test_top.env.agent.monitor", "DUT", dut)
+    # 3. Publica parámetros de test en ConfigDB.
+    #    El DUT no se publica aquí: los componentes lo acceden vía
+    #    cocotb.top directamente (más idiomático en pyUVM).
+    ConfigDB().set(None, "*", "N_TRANSACTIONS", N_TRANSACTIONS)
+    ConfigDB().set(None, "*", "SEED",           SEED)
 
     # 4. Arranca el test UVM.
     await uvm_root().run_test("AluTest")
