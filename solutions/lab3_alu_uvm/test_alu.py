@@ -195,7 +195,7 @@ class AluDriver(uvm_driver):
 
     def build_phase(self):
         # Recupera el dut del ConfigDB. La key "DUT" la pone el wrapper.
-        self.dut = ConfigDB().get(self, "", "DUT")
+        self.dut = ConfigDB().get(None, "*", "DUT")
 
     async def run_phase(self):
         # Estado inicial.
@@ -236,7 +236,7 @@ class AluMonitor(uvm_monitor):
     """Observa el DUT y publica AluTransaction al analysis_port."""
 
     def build_phase(self):
-        self.dut = ConfigDB().get(self, "", "DUT")
+        self.dut = ConfigDB().get(None, "*", "DUT")
         # Analysis port: el scoreboard se conecta aquí.
         self.analysis_port = self.create_analysis_port("ap")
 
