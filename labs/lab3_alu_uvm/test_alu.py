@@ -70,7 +70,6 @@ from pyuvm import (
     uvm_env,
     uvm_test,
     uvm_root,
-    ConfigDB,
     uvm_tlm_analysis_fifo,
 )
 
@@ -167,14 +166,11 @@ class AluTransaction(uvm_sequence_item):
 # Sequence: AluSequence
 # ============================================================================
 class AluSequence(uvm_sequence):
-    """Genera transacciones aleatorias. Lee N y SEED de ConfigDB."""
+    """Genera N_TRANSACTIONS transacciones aleatorias con seed fijo SEED."""
 
     def __init__(self, name="alu_seq"):
         super().__init__(name)
-        # Estos campos los lee el alumno del ConfigDB.
-        self.n_transactions = ConfigDB().get(None, "", "N_TRANSACTIONS")
-        seed                = ConfigDB().get(None, "", "SEED")
-        self.rng            = random.Random(seed)
+        self.rng = random.Random(SEED)
 
     # ------------------------------------------------------------------------
     # TODO 3: body
@@ -185,7 +181,7 @@ class AluSequence(uvm_sequence):
     #   3. await self.start_item(tr)
     #   4. await self.finish_item(tr)
     #
-    # HINT: for _ in range(self.n_transactions): ...
+    # HINT: for _ in range(N_TRANSACTIONS): ...
     # ------------------------------------------------------------------------
     async def body(self):
         # TODO 3: implementa el body de la sequence.
@@ -323,7 +319,6 @@ class AluScoreboard(uvm_component):
         self.n_received  = 0
         self.n_passed    = 0
         self.n_failed    = 0
-        self.n_expected  = ConfigDB().get(None, "", "N_TRANSACTIONS")
 
     # ------------------------------------------------------------------------
     # TODO 6: run_phase
@@ -364,8 +359,8 @@ class AluScoreboard(uvm_component):
         assert self.n_failed == 0, (
             f"Scoreboard detectó {self.n_failed} discrepancias."
         )
-        assert self.n_received == self.n_expected, (
-            f"Se esperaban {self.n_expected} transacciones, "
+        assert self.n_received == N_TRANSACTIONS, (
+            f"Se esperaban {N_TRANSACTIONS} transacciones, "
             f"recibidas {self.n_received}."
         )
 
@@ -406,12 +401,10 @@ class AluTest(uvm_test):
 #   1. Arranca el reloj: cocotb.start_soon(Clock(dut.clk, CLK_PERIOD_NS,
 #                                                units="ns").start())
 #   2. Reset síncrono durante 3 ciclos, luego baja rst.
-#   3. ConfigDB().set(None, "*", "N_TRANSACTIONS", N_TRANSACTIONS)
-#   4. ConfigDB().set(None, "*", "SEED",           SEED)
-#   5. await uvm_root().run_test("AluTest")
-# ============================================================================
+#   3. await uvm_root().run_test("AluTest")
+
 @cocotb.test()
 async def alu_uvm_test(dut):
     """Punto de entrada del testbench UVM."""
-    # TODO 8: implementa el wrapper (reloj, reset, ConfigDB, run_test).
+    # TODO 8: implementa el wrapper (reloj, reset, run_test).
     raise NotImplementedError("TODO 8: implementa el wrapper @cocotb.test()")
