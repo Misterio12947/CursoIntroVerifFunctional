@@ -20,7 +20,11 @@ Días disponibles:
   solución maestra, skeleton para el alumno y waveforms.
 - **Día 3**: laboratorio 2 (verificación de un FIFO con scoreboard y
   modelo de referencia Python). CI con GitHub Actions ejecuta los
-  tres flujos en cada push.
+  flujos en cada push.
+- **Día 4**: laboratorio 3 (verificación de una ALU con **pyUVM**),
+  arquitectura UVM completa: test, env, agent, driver, monitor,
+  scoreboard, sequencer, sequence, transaction. Comunicación entre
+  componentes vía `uvm_tlm_analysis_fifo`.
 
 ## Inicio rápido
 
@@ -52,14 +56,17 @@ Si algo falla, consulta [`docs/setup.md`](docs/setup.md).
 ├── rtl/                    Diseños Verilog compartidos por todos los labs
 │   ├── counter.v
 │   └── fifo.v
+│   └── alu.v
 ├── tests/                  Smoke test del Día 1
 │   └── test_smoke.py
 ├── labs/
 │   ├── lab1_counter/       Lab 1: contador con cocotb (skeleton)
 │   └── lab2_fifo/          Lab 2: FIFO con scoreboard (skeleton)
+│   └── lab3_alu_uvm/       Lab 3: ALU con pyUVM (skeleton)
 ├── solutions/
 │   ├── lab1_counter/       Lab 1: solución maestra y referencia
 │   └── lab2_fifo/          Lab 2: solución maestra, modelo y scoreboard
+│   └── lab3_alu_uvm/       Lab 3: solución maestra UVM completa
 ├── slides/                 Material de presentación
 ├── notebooks/              Notebooks de apoyo
 ├── docs/                   Documentación técnica
@@ -100,18 +107,20 @@ detalles.
 
 ## Laboratorios disponibles
 
-| Lab                                   | Foco                                                                |
-|---------------------------------------|---------------------------------------------------------------------|
-| [`lab1_counter`](labs/lab1_counter/)  | Verificación de un contador síncrono con cocotb. Corrutinas y triggers. |
-| [`lab2_fifo`](labs/lab2_fifo/)        | Verificación de una FIFO síncrona con modelo de referencia Python y scoreboard. |
+| Lab                                       | Foco                                                                |
+|-------------------------------------------|---------------------------------------------------------------------|
+| [`lab1_counter`](labs/lab1_counter/)      | Verificación de un contador síncrono con cocotb. Corrutinas y triggers. |
+| [`lab2_fifo`](labs/lab2_fifo/)            | Verificación de una FIFO síncrona con modelo de referencia Python y scoreboard. |
+| [`lab3_alu_uvm`](labs/lab3_alu_uvm/)      | Verificación de una ALU con **pyUVM**: arquitectura UVM completa, TLM analysis_fifo. |
 
 Cada laboratorio incluye:
 
 - Versión skeleton (con `TODO`s) en `labs/<lab>/`.
 - Solución maestra y referencias en `solutions/<lab>/`.
 
-Para empezar: [`labs/lab1_counter/README.md`](labs/lab1_counter/README.md) o
-[`labs/lab2_fifo/README.md`](labs/lab2_fifo/README.md).
+Para empezar: [`labs/lab1_counter/README.md`](labs/lab1_counter/README.md),
+[`labs/lab2_fifo/README.md`](labs/lab2_fifo/README.md) o
+[`labs/lab3_alu_uvm/README.md`](labs/lab3_alu_uvm/README.md).
 
 ## Integración continua
 
@@ -120,8 +129,9 @@ GitHub Actions ejecuta automáticamente en cada push y pull request a `main`:
 - `smoke-test`: smoke test del Día 1.
 - `lab1-counter`: solución maestra del Lab 1.
 - `lab2-fifo`: 4 tests de la solución maestra del Lab 2.
+- `lab3-alu-uvm`: solución maestra UVM del Lab 3 (50 transacciones, scoreboard).
 
-Los tres jobs corren en paralelo en runners separados. El estado en
+Los cuatro jobs corren en paralelo en runners separados. El estado en
 tiempo real se ve en el badge superior y en la pestaña
 [Actions](https://github.com/Misterio12947/CursoIntroVerifFunctional/actions).
 
