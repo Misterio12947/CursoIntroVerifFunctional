@@ -195,7 +195,7 @@ class AluDriver(uvm_driver):
 
     def build_phase(self):
         # Recupera el dut del ConfigDB. La key "DUT" la pone el wrapper.
-        self.dut = ConfigDB().get(None, "*", "DUT")
+        self.dut = ConfigDB().get(self, "", "DUT")
 
     async def run_phase(self):
         # Estado inicial.
@@ -236,7 +236,7 @@ class AluMonitor(uvm_monitor):
     """Observa el DUT y publica AluTransaction al analysis_port."""
 
     def build_phase(self):
-        self.dut = ConfigDB().get(None, "*", "DUT")
+        self.dut = ConfigDB().get(self, "", "DUT")
         # Analysis port: el scoreboard se conecta aquí.
         self.analysis_port = self.create_analysis_port("ap")
 
@@ -438,7 +438,8 @@ async def alu_uvm_test(dut):
     await RisingEdge(dut.clk)
 
     # 3. Inyecta el DUT en el ConfigDB.
-    ConfigDB().set(None, "*", "DUT", dut)
+    ConfigDB().set(None, "uvm_test_top.env.agent.driver",  "DUT", dut)
+    ConfigDB().set(None, "uvm_test_top.env.agent.monitor", "DUT", dut)
 
     # 4. Arranca el test UVM.
     await uvm_root().run_test("AluTest")
