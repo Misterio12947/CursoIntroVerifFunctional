@@ -18,10 +18,10 @@ TOPLEVEL_LANG  ?= verilog
 TESTBENCH ?= correct
 
 ifeq ($(TESTBENCH),buggy)
-	VERILOG_SOURCES := $(RTLDIR)/fpu_buggy.v
-	$(info Using BUGGY RTL: $(VERILOG_SOURCES))
+VERILOG_SOURCES := $(RTLDIR)/fpu_buggy.v
+$(info Using BUGGY RTL: $(VERILOG_SOURCES))
 else
-	VERILOG_SOURCES := $(RTLDIR)/fpu.v
+VERILOG_SOURCES := $(RTLDIR)/fpu.v
 endif
 
 TOPLEVEL  := fpu
