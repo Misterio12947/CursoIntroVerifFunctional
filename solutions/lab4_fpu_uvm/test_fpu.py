@@ -363,7 +363,7 @@ class FpuScoreboard(uvm_component):
             f"Cobertura incompleta en CoverPoints críticos: {gaps}. "
             f"El test debe diseñarse para cubrir todos los bins."
         )
-        self.logger.info("Cobertura crítica: 100% en %s", critical_points)
+        self.logger.info(f"Cobertura crítica: 100% en {critical_points}")
 
 
 # ============================================================================
