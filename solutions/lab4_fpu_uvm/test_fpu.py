@@ -44,6 +44,11 @@ from pyuvm import (
     uvm_tlm_analysis_fifo,
 )
 
+from cocotb_coverage.coverage import (
+    CoverPoint,
+    CoverCross,
+    coverage_db,
+)
 
 # ============================================================================
 # Constantes.
@@ -102,7 +107,54 @@ def within_1_ulp(dut_bits, ref_bits):
     """
     return abs(int(dut_bits) - int(ref_bits)) <= 1
 
+# ============================================================================
+# Cobertura funcional.
+# ============================================================================
+def _classify_exp_diff(a_bits, b_bits):
+    """Clasifica la diferencia de exponentes en uno de 4 rangos."""
+    exp_a = (a_bits >> 23) & 0xFF
+    exp_b = (b_bits >> 23) & 0xFF
+    diff = abs(int(exp_a) - int(exp_b))
+    if diff == 0:
+        return "equal"
+    elif diff <= 3:
+        return "close"
+    elif diff <= 10:
+        return "moderate"
+    else:
+        return "far"
 
+
+def _classify_result_sign(result_bits):
+    """Clasifica el signo del resultado: positive / negative / zero."""
+    # IEEE 754: si los 31 bits inferiores son 0, es cero (independiente del signo bit).
+    if (result_bits & 0x7FFFFFFF) == 0:
+        return "zero"
+    return "negative" if (result_bits >> 31) else "positive"
+
+
+# Decoradores aplicados a sample_coverage. Cada llamada a sample_coverage
+# marca un bin en cada CoverPoint según el valor de tr.
+@CoverPoint("top.sign_a",
+            xf=lambda tr: (tr.a >> 31) & 1,
+            bins=[0, 1],
+            bins_labels=["positive", "negative"])
+@CoverPoint("top.sign_b",
+            xf=lambda tr: (tr.b >> 31) & 1,
+            bins=[0, 1],
+            bins_labels=["positive", "negative"])
+@CoverPoint("top.exp_diff_range",
+            xf=lambda tr: _classify_exp_diff(tr.a, tr.b),
+            bins=["equal", "close", "moderate", "far"])
+@CoverPoint("top.result_sign",
+            xf=lambda tr: _classify_result_sign(tr.result),
+            bins=["positive", "negative", "zero"])
+@CoverCross("top.sign_cross",
+            items=["top.sign_a", "top.sign_b"])
+def sample_coverage(tr):
+    """Sampler de cobertura. Llamado por el scoreboard tras cada transacción."""
+    pass
+    
 # ============================================================================
 # Transaction: FpuTransaction
 # ============================================================================
@@ -249,7 +301,11 @@ class FpuScoreboard(uvm_component):
             self._check(tr)
 
     def _check(self, tr):
+        # Sampling de cobertura: se hace ANTES de chequear, así que cubrimos
+        # incluso las transacciones que fallarían en el scoreboard.
+        sample_coverage(tr)
         expected = golden_fadd(tr.a, tr.b)
+        
         if within_1_ulp(tr.result, expected):
             self.n_passed += 1
             self.logger.debug("[SBD PASS] %s | esperado=0x%08X", tr, expected)
@@ -276,9 +332,38 @@ class FpuScoreboard(uvm_component):
         assert self.n_failed == 0, (
             f"Scoreboard detectó {self.n_failed} discrepancias > 1 ULP."
         )
-        assert self.n_received == N_TRANSACTIONS, (
-            f"Esperaban {N_TRANSACTIONS} tx, recibidas {self.n_received}."
+        # n_received puede ser >= N_TRANSACTIONS si hay test dirigido extra.
+        assert self.n_received >= N_TRANSACTIONS, (
+            f"Mínimo esperado {N_TRANSACTIONS} tx, recibidas {self.n_received}."
         )
+
+        # --- Reporte de cobertura ---
+        self.logger.info("=" * 70)
+        self.logger.info("=== Reporte de cobertura funcional ===")
+        self.logger.info("=" * 70)
+        coverage_db.report_coverage(log_func=self.logger.info, bins=True)
+
+        # Exporta YAML para post-procesado (script generate_coverage_html.py).
+        coverage_db.export_to_yaml(filename="coverage.yml")
+        self.logger.info("Coverage YAML escrito en coverage.yml")
+
+        # --- Cobertura fallible: 100% en los CoverPoints clave ---
+        critical_points = [
+            "top.sign_a",
+            "top.sign_b",
+            "top.exp_diff_range",
+            "top.sign_cross",
+        ]
+        gaps = []
+        for cp in critical_points:
+            cov = coverage_db[cp].cover_percentage
+            if cov < 100.0:
+                gaps.append(f"{cp}: {cov:.1f}%")
+        assert not gaps, (
+            f"Cobertura incompleta en CoverPoints críticos: {gaps}. "
+            f"El test debe diseñarse para cubrir todos los bins."
+        )
+        self.logger.info("Cobertura crítica: 100% en %s", critical_points)
 
 
 # ============================================================================
@@ -293,22 +378,6 @@ class FpuEnv(uvm_env):
         self.agent.monitor.analysis_port.connect(
             self.scoreboard.fifo.analysis_export
         )
-
-
-# ============================================================================
-# Test: FpuTest
-# ============================================================================
-class FpuTest(uvm_test):
-    def build_phase(self):
-        self.env = FpuEnv("env", self)
-
-    async def run_phase(self):
-        self.raise_objection()
-        seq = FpuSequence("fpu_seq")
-        await seq.start(self.env.agent.sequencer)
-        await Timer(50, units="ns")
-        self.drop_objection()
-
 
 # ============================================================================
 # Wrapper @cocotb.test()
@@ -328,3 +397,78 @@ async def fpu_uvm_test(dut):
     await RisingEdge(dut.clk)
 
     await uvm_root().run_test("FpuTest")
+    
+    
+# ============================================================================
+# Test dirigido — garantiza cobertura 100% en CoverPoints críticos.
+# ----------------------------------------------------------------------------
+# El test aleatorio no garantiza cubrir todos los bins (sobre todo el cero
+# exacto y algunas combinaciones de signos en pocos exponentes). Este test
+# añade 20 transacciones específicas tras el random para asegurar coverage.
+# ============================================================================
+
+class FpuDirectedSequence(uvm_sequence):
+    """20 transacciones específicas para cubrir bins difíciles."""
+
+    DIRECTED_PAIRS = [
+        # (a_bits, b_bits, descripción)
+        # Cuatro combinaciones de signos con exponentes iguales:
+        (0x3F800000, 0x3F800000),  # +1.0 + +1.0  (sign_a=0, sign_b=0)
+        (0x3F800000, 0xBF800000),  # +1.0 + -1.0  (sign_a=0, sign_b=1) -> cero
+        (0xBF800000, 0x3F800000),  # -1.0 + +1.0  (sign_a=1, sign_b=0) -> cero
+        (0xBF800000, 0xBF800000),  # -1.0 + -1.0  (sign_a=1, sign_b=1)
+
+        # Forzar exp_diff close (diff=2):
+        (0x40800000, 0x40000000),  # 4.0  + 2.0
+        (0xC0800000, 0x40000000),  # -4.0 + 2.0
+
+        # Forzar exp_diff moderate (diff=7):
+        (0x42C80000, 0x40000000),  # 100.0 + 2.0  (exp 133 vs 128)
+        (0xC2C80000, 0x40000000),  # -100.0 + 2.0
+
+        # Forzar exp_diff far (diff>10):
+        (0x4B189680, 0x3F800000),  # 1e7 + 1.0  (exp 150 vs 127, diff=23)
+        (0xCB189680, 0x3F800000),  # -1e7 + 1.0
+        (0x4B189680, 0xBF800000),
+        (0xCB189680, 0xBF800000),
+
+        # Más para reforzar combinaciones:
+        (0x40490FDB, 0x3FB504F3),  # pi + sqrt(2)
+        (0x40490FDB, 0xBFB504F3),  # pi - sqrt(2)
+        (0xC0490FDB, 0xBFB504F3),  # -pi - sqrt(2)
+        (0xC0490FDB, 0x3FB504F3),  # -pi + sqrt(2)
+        (0x42A00000, 0xC2A00000),  # 80.0 + (-80.0) -> cero exacto
+        (0x42C80000, 0xC2A00000),  # 100.0 + (-80.0) -> positive
+        (0xC2C80000, 0x42A00000),  # -100.0 + 80.0 -> negative
+        (0x3E800000, 0xC4000000),  # 0.25 + (-512.0)
+    ]
+
+    async def body(self):
+        for a_bits, b_bits in self.DIRECTED_PAIRS:
+            tr = FpuTransaction()
+            tr.a = a_bits
+            tr.b = b_bits
+            await self.start_item(tr)
+            await self.finish_item(tr)
+
+
+class FpuTest(uvm_test):
+    """Ejecuta el random + el dirigido para garantizar coverage 100%."""
+
+    def build_phase(self):
+        self.env = FpuEnv("env", self)
+
+    async def run_phase(self):
+        self.raise_objection()
+
+        # Fase 1: random.
+        random_seq = FpuSequence("random_seq")
+        await random_seq.start(self.env.agent.sequencer)
+
+        # Fase 2: dirigido para garantizar coverage.
+        directed_seq = FpuDirectedSequence("directed_seq")
+        await directed_seq.start(self.env.agent.sequencer)
+
+        await Timer(50, units="ns")
+        self.drop_objection()
+

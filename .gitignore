@@ -52,3 +52,7 @@ desktop.ini
 # dump.v es generado por el Makefile del laboratorio cuando se ejecuta
 # `make waves`. No es código fuente.
 **/waves/dump.v
+
+# Coverage artifacts (generated, not versioned)
+**/coverage.yml
+**/coverage_report.html

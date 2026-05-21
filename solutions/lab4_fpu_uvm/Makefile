@@ -90,3 +90,17 @@ clean:
 	       $(TOPDIR)/waves/dump.v \
 	       $(TOPDIR)/coverage_report.html \
 	       $(TOPDIR)/coverage.yml
+
+.PHONY: coverage
+coverage:
+	$(MAKE) -f $(MAKEFILE_LIST) test
+	@if [ -f coverage.yml ]; then \
+	    python3 $(TOPDIR)/generate_coverage_html.py; \
+	    echo ""; \
+	    echo "=== Coverage report ==="; \
+	    echo "  YAML: $(TOPDIR)/coverage.yml"; \
+	    echo "  HTML: $(TOPDIR)/coverage_report.html"; \
+	else \
+	    echo "ERROR: coverage.yml no se generó."; \
+	    exit 1; \
+	fi
