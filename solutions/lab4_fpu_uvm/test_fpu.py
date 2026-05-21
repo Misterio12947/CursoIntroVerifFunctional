@@ -341,7 +341,7 @@ class FpuScoreboard(uvm_component):
         self.logger.info("=" * 70)
         self.logger.info("=== Reporte de cobertura funcional ===")
         self.logger.info("=" * 70)
-        coverage_db.report_coverage(log_func=self.logger.info, bins=True)
+        coverage_db.report_coverage(logger=self.logger.info, bins=True)
 
         # Exporta YAML para post-procesado (script generate_coverage_html.py).
         coverage_db.export_to_yaml(filename="coverage.yml")
