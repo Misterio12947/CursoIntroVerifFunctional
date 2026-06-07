@@ -191,13 +191,13 @@ grep -nP "^    " Makefile
 El repositorio tiene un workflow de GitHub Actions
 (`.github/workflows/ci.yml`) que ejecuta automáticamente en cada
 push y pull request:
-
 | Job             | Acción                                                |
 |-----------------|-------------------------------------------------------|
 | `smoke-test`    | `make` desde la raíz (Día 1).                         |
 | `lab1-counter`  | `make -C solutions/lab1_counter` (Día 2).             |
 | `lab2-fifo`     | `make -C solutions/lab2_fifo` (Día 3, 4 tests).       |
 | `lab3-alu-uvm`  | `make -C solutions/lab3_alu_uvm` (Día 4, pyUVM).      |
+| `lab4-fpu-uvm`  | `make -C solutions/lab4_fpu_uvm` (Día 5, FPU + coverage). |
 
 Si el badge del README muestra "passing", los tres flujos se ejecutan
 sin errores en un runner limpio. Si muestra "failing", alguno falló
@@ -211,7 +211,7 @@ verdad para desarrollo local y Codespaces.
 
 ## Cómo navegar entre laboratorios
 
-Desde el Día 4 hay tres laboratorios. Cada uno tiene su propia carpeta
+Desde el Día 5 hay cuatro laboratorios. Cada uno tiene su propia carpeta
 con `Makefile`, README y `test_*.py`:
 
 - `labs/lab1_counter/` — Lab 1 (skeleton del alumno).
@@ -220,9 +220,12 @@ con `Makefile`, README y `test_*.py`:
 - `solutions/lab2_fifo/` — Lab 2 (solución maestra + referencia).
 - `labs/lab3_alu_uvm/` — Lab 3 (skeleton del alumno, pyUVM).
 - `solutions/lab3_alu_uvm/` — Lab 3 (solución maestra UVM + alu_uvm_reference.md).
+- `labs/lab4_fpu_uvm/` — Lab 4 (skeleton del alumno, FPU + coverage).
+- `solutions/lab4_fpu_uvm/` — Lab 4 (solución FPU + fpu_uvm_reference.md + README_BUG_HUNT.md).
 
 El RTL en `rtl/` se comparte entre todos: una sola fuente de verdad
-para cada DUT.
+para cada DUT. El Lab 4 además incluye `rtl/fpu_buggy.v` como ejercicio
+de bug hunting (no usado por CI).
 
 ## Regenerar `expected_output.log`
 
