@@ -25,6 +25,11 @@ Días disponibles:
   arquitectura UVM completa: test, env, agent, driver, monitor,
   scoreboard, sequencer, sequence, transaction. Comunicación entre
   componentes vía `uvm_tlm_analysis_fifo`.
+- **Día 5**: laboratorio 4 (verificación de una **FPU IEEE 754** con
+  pyUVM + **cobertura funcional**). Modelo de referencia con
+  `numpy.float32`, tolerancia ±1 ULP, CoverPoints + CoverCross con
+  `cocotb-coverage`, reporte HTML, y ejercicio de bug hunting contra
+  un RTL con bug deliberado (`rtl/fpu_buggy.v`).
 
 ## Inicio rápido
 
@@ -57,16 +62,20 @@ Si algo falla, consulta [`docs/setup.md`](docs/setup.md).
 │   ├── counter.v
 │   └── fifo.v
 │   └── alu.v
+│   ├── fpu.v
+│   └── fpu_buggy.v         Variante con bug deliberado (ejercicio Lab 4)
 ├── tests/                  Smoke test del Día 1
 │   └── test_smoke.py
 ├── labs/
 │   ├── lab1_counter/       Lab 1: contador con cocotb (skeleton)
 │   └── lab2_fifo/          Lab 2: FIFO con scoreboard (skeleton)
 │   └── lab3_alu_uvm/       Lab 3: ALU con pyUVM (skeleton)
+│   └── lab4_fpu_uvm/       Lab 4: FPU con pyUVM + cobertura (skeleton)
 ├── solutions/
 │   ├── lab1_counter/       Lab 1: solución maestra y referencia
 │   └── lab2_fifo/          Lab 2: solución maestra, modelo y scoreboard
 │   └── lab3_alu_uvm/       Lab 3: solución maestra UVM completa
+│   └── lab4_fpu_uvm/       Lab 4: solución FPU + coverage + bug hunt
 ├── slides/                 Material de presentación
 ├── notebooks/              Notebooks de apoyo
 ├── docs/                   Documentación técnica
@@ -112,6 +121,7 @@ detalles.
 | [`lab1_counter`](labs/lab1_counter/)      | Verificación de un contador síncrono con cocotb. Corrutinas y triggers. |
 | [`lab2_fifo`](labs/lab2_fifo/)            | Verificación de una FIFO síncrona con modelo de referencia Python y scoreboard. |
 | [`lab3_alu_uvm`](labs/lab3_alu_uvm/)      | Verificación de una ALU con **pyUVM**: arquitectura UVM completa, TLM analysis_fifo. |
+| [`lab4_fpu_uvm`](labs/lab4_fpu_uvm/)      | Verificación de una **FPU IEEE 754** con pyUVM + **cobertura funcional**. Tolerancia ±1 ULP, CoverPoints, bug hunting. |
 
 Cada laboratorio incluye:
 
@@ -119,8 +129,9 @@ Cada laboratorio incluye:
 - Solución maestra y referencias en `solutions/<lab>/`.
 
 Para empezar: [`labs/lab1_counter/README.md`](labs/lab1_counter/README.md),
-[`labs/lab2_fifo/README.md`](labs/lab2_fifo/README.md) o
-[`labs/lab3_alu_uvm/README.md`](labs/lab3_alu_uvm/README.md).
+[`labs/lab2_fifo/README.md`](labs/lab2_fifo/README.md),
+[`labs/lab3_alu_uvm/README.md`](labs/lab3_alu_uvm/README.md) o
+[`labs/lab4_fpu_uvm/README.md`](labs/lab4_fpu_uvm/README.md).
 
 ## Integración continua
 
@@ -130,8 +141,9 @@ GitHub Actions ejecuta automáticamente en cada push y pull request a `main`:
 - `lab1-counter`: solución maestra del Lab 1.
 - `lab2-fifo`: 4 tests de la solución maestra del Lab 2.
 - `lab3-alu-uvm`: solución maestra UVM del Lab 3 (50 transacciones, scoreboard).
+- `lab4-fpu-uvm`: solución FPU del Lab 4 (220 transacciones + cobertura 100%).
 
-Los cuatro jobs corren en paralelo en runners separados. El estado en
+Los cinco jobs corren en paralelo en runners separados. El estado en
 tiempo real se ve en el badge superior y en la pestaña
 [Actions](https://github.com/Misterio12947/CursoIntroVerifFunctional/actions).
 
